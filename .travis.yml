@@ -16,7 +16,14 @@ jobs:
 
   - stage: build
     os: windows
-    script:
-      - powershell -Command Get-ExecutionPolicy -List
+    install:
       - powershell -Command Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope LocalMachine
+      - powershell -Command "Import-Module PackageManagement; Install-PackageProvider Nuget"
+      - powershell -Command "Import-Module PackageManagement; Register-PackageSource -Name NuGetOrg -Location https://www.nuget.org/api/v2 -ProviderName NuGet"
+      - powershell -Command "Import-Module PackageManagement; Install-Package -Source NuGetOrg -Name vswhere -Force -ExcludeVersion -Destination C:\tools"
+      - powershell -Command Invoke-WebRequest -Uri "https://github.com/microsoft/vswhere/releases/download/2.8.4/vswhere.exe" -OutFile C:\tools\vswhere.exe
+      - powershell -Command Invoke-WebRequest -Uri 'https://visualstudio.microsoft.com/de/thank-you-downloading-visual-studio/?sku=BuildTools&rel=16#' -OutFile C:\tools\vsbt.exe
+    script:
+      - powershell -Command C:\tools\vsbt.exe
+      - powershell -Command C:\tools\vswhere.exe -help
       - powershell -File scripts/build_windows.ps1
